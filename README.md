@@ -34,8 +34,8 @@ node scripts/jw.mjs brief      # 一行摘要：第几周 + 今天有什么课 +
 **要求**：Node.js ≥ 18（不需要 `npm install`，零依赖）
 
 ```bash
-git clone https://github.com/<your-name>/sdufe-jw.git
-cd sdufe-jw
+git clone https://github.com/ljh8686/sdufe-jw-cli.git
+cd sdufe-jw-cli
 
 cp config.example.json config.json
 # 编辑 config.json，填入学号和密码
