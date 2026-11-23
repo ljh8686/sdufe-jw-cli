@@ -127,6 +127,18 @@ function writeData(key, v) {
   writeCache({ data });
 }
 
+/** 培养方案名（如「2024 物流管理」）：永久缓存，方案不会变，取一次就够 */
+function readPlanName() {
+  const c = readCache();
+  return (c && c.data && c.data.planName && c.data.planName.v) || '';
+}
+
+function writePlanName(name) {
+  if (!name) return;
+  const c = readCache() || {};
+  writeCache({ data: { ...(c.data || {}), planName: { at: Date.now(), v: name } } });
+}
+
 /* ---------------------------------------------------------------- 网络 */
 
 function cookieOf(res) {
@@ -541,7 +553,31 @@ async function fetchRequirement(ctx) {
     }));
   const h2 = /<h2>\s*([\s\S]{0,60}?)\s*专业修读情况审核报告/.exec(html);
   const planName = h2 ? cellText(h2[1]) : '';
+  writePlanName(planName);
   return { planName, items };
+}
+
+/**
+ * 只取培养方案名（「2024 物流管理」）。
+ * 方案编号 ndzydm 是从登录账号自己的页面读的，不写死专业，
+ * 所以换个专业的同学跑出来的就是他自己那套方案。
+ */
+async function fetchPlanName(ctx) {
+  const cached = readPlanName();
+  if (cached) return cached;
+  const audit = readData('audit');
+  if (audit && audit.planName) {
+    writePlanName(audit.planName);
+    return audit.planName;
+  }
+  const page = await get(ctx, '/jsxsd/xxwcqk/xxwcqk_idxOnxz.do');
+  const m = /name="ndzydm"\s+value="([^"]+)"/.exec(page);
+  if (!m) return '';
+  const html = await post(ctx, '/jsxsd/xxwcqk/xxwcqkOnkcxz.do', new URLSearchParams({ ndzydm: m[1], jx0301zxjhid: '' }));
+  const h2 = /<h2>\s*([\s\S]{0,60}?)\s*专业修读情况审核报告/.exec(html);
+  const name = h2 ? cellText(h2[1]) : '';
+  writePlanName(name);
+  return name;
 }
 
 /** 通选课（公选课）修读情况：分类要求 + 已修明细 */
@@ -931,8 +967,10 @@ async function main() {
     }
     const grades = await fetchGrades(ctx, { mode: 'max' });
     const s = summarize(grades);
-    if (asJson) return console.log(JSON.stringify({ plan, totalCredits: plan.reduce((a, p) => a + p.credit, 0), bySemester: bySem, earned: s }, null, 2));
-    console.log(`# 培养方案：${plan.length} 门 / ${plan.reduce((a, p) => a + p.credit, 0)} 学分`);
+    const pname = await fetchPlanName(ctx);
+    const totalPlanCredit = plan.reduce((a, p) => a + p.credit, 0);
+    if (asJson) return console.log(JSON.stringify({ planName: pname, plan, totalCredits: totalPlanCredit, bySemester: bySem, earned: s }, null, 2));
+    console.log(`# 培养方案${pname ? '：' + pname : ''}（${plan.length} 门 / ${totalPlanCredit} 学分）`);
     console.log('');
     console.log('| 学期 | 门数 | 计划学分 | 已修学分 |');
     console.log('|---|---|---|---|');
