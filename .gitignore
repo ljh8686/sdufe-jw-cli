@@ -16,3 +16,6 @@ desktop.ini
 
 # 依赖（本项目零依赖，防以后加）
 node_modules/
+
+# Windows 保留设备名（某些网络加速器会在目录里造出同名字符设备文件）
+CON

@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 语法检查
+        run: node --check scripts/jw.mjs
+      - name: 帮助信息（不联网、不需要账号）
+        run: node scripts/jw.mjs --help
+      - name: 未知命令应报错退出
+        run: |
+          if node scripts/jw.mjs notacommand; then
+            echo "未知命令居然成功了"; exit 1
+          fi
+      - name: 确认仓库里没有账号密码
+        run: |
+          if git ls-files | grep -qx "config.json"; then
+            echo "config.json 被提交了！"; exit 1
+          fi
