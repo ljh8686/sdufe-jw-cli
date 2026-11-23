@@ -1,5 +1,7 @@
 # sdufe-jw
 
+[![CI](https://github.com/ljh8686/sdufe-jw-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/ljh8686/sdufe-jw-cli/actions/workflows/ci.yml)
+
 山东财经大学教务系统（jw.sdufe.edu.cn）命令行查询工具。
 
 **纯 HTTP 实现，不需要浏览器、没有验证码、不用装依赖。** 一条命令查成绩、绩点、课表、学分完成情况、考试安排。
